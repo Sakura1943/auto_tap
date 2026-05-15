@@ -1,4 +1,6 @@
-# 屏幕点击器
+# auto_tap · 屏幕点击器
+
+[![Build & Release](https://github.com/Sakura1943/auto_tap/actions/workflows/release.yml/badge.svg)](https://github.com/Sakura1943/auto_tap/actions)
 
 基于 Flutter 的 Android 自动点击应用，通过无障碍服务实现屏幕任意位置的自动点击。
 
