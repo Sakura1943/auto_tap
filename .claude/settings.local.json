@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub *)",
+      "Bash(flutter build *)",
+      "Bash(flutter analyze *)",
+      "Bash(java -version)",
+      "Bash(where java *)",
+      "Bash(flutter doctor *)",
+      "Bash(export JAVA_HOME=\"D:/Applications/Android Studio/jbr\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(curl -L -o /dev/null -w \"%{http_code}\" \"https://mirrors.cloud.tencent.com/gradle/gradle-8.14-all.zip\")",
+      "Bash(rm -rf \"$HOME/.gradle/wrapper/dists/gradle-8.14-all\" 2>/dev/null; echo \"cleaned\")",
+      "Bash(rm -rf \"D:/Applications/develop/Android/Sdk/ndk/28.2.13676358\" 2>/dev/null && echo \"NDK removed, will be re-downloaded\")",
+      "Bash(flutter clean *)",
+      "Bash(start ms-settings:developers)",
+      "Bash(reg add *)",
+      "Bash(flutter config *)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew assembleDebug --no-daemon)",
+      "Bash(taskkill /F /IM kotlin*)",
+      "Bash(adb logcat *)",
+      "Bash(./gradlew assembleDebug assembleRelease --no-daemon)"
+    ],
+    "additionalDirectories": [
+      "D:\\Code\\flutter\\mouse_clicker\\__TRACKED_VAR__\\.gradle\\wrapper\\dists",
+      "D:\\Applications\\develop\\Android\\Sdk\\ndk\\28.2.13676358"
+    ]
+  }
+}

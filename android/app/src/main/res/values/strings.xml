@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">屏幕点击器需要无障碍服务权限来执行自动点击操作。此服务仅用于在屏幕上执行模拟点击，不会收集或读取任何个人数据。</string>
+</resources>
