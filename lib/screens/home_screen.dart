@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 import '../services/clicker_channel.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -133,8 +135,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _pollState();
     } catch (e) {
       if (mounted) {
+        final tr = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('启动失败: $e')),
+          SnackBar(content: Text('${tr.get('startFailed')}: $e')),
         );
       }
     }
@@ -151,10 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _pollState() {
     Timer.periodic(const Duration(milliseconds: 500), (timer) async {
-      if (!mounted || !_overlayShown) {
-        timer.cancel();
-        return;
-      }
+      if (!mounted || !_overlayShown) { timer.cancel(); return; }
       final state = await ClickerChannel.getState();
       if (state != null && mounted) {
         setState(() {
@@ -173,23 +173,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showAccessibilityDialog() {
+    final tr = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('需要无障碍服务'),
-        content: const Text('此应用需要开启无障碍服务才能执行自动点击。'),
+        title: Text(tr.get('needAccessibilityTitle')),
+        content: Text(tr.get('needAccessibilityBody')),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _openAccessibilitySettings();
-            },
-            child: const Text('前往设置'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr.get('cancel'))),
+          FilledButton(onPressed: () { Navigator.pop(ctx); _openAccessibilitySettings(); }, child: Text(tr.get('goSettings'))),
         ],
       ),
     );
@@ -204,19 +196,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String get _clickCountLabel {
     final t = _countController.text.trim();
     final c = t.isEmpty ? -1 : (int.tryParse(t) ?? -1);
-    return c < 0 ? '无限次' : '$c 次';
+    return c < 0 ? '∞' : '$c';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tr = AppLocalizations.of(context);
     final disabled = _overlayShown;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('屏幕点击器'),
+        title: Text(tr.get('appTitle')),
         backgroundColor: theme.colorScheme.inversePrimary,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: tr.get('settings'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          ),
           if (_overlayShown)
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -228,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _isClicking ? '运行中: $_currentClicks/$_clickCountLabel' : '已暂停',
+                    _isClicking ? '${tr.get('running')}: $_currentClicks/$_clickCountLabel' : tr.get('paused'),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
@@ -239,19 +237,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildPermissionCard(theme),
+          _buildPermissionCard(theme, tr),
           const SizedBox(height: 12),
-          _buildConfigCard(theme, disabled),
+          _buildConfigCard(theme, tr, disabled),
           const SizedBox(height: 24),
-          _buildMainButton(theme),
+          _buildMainButton(theme, tr),
           const SizedBox(height: 16),
           if (_overlayShown)
             Center(
               child: Text(
-                _isClicking ? '悬浮窗运行中 — 点击圆圈可暂停' : '悬浮窗已显示 — 点击圆圈开始',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: _isClicking ? Colors.green : Colors.orange,
-                ),
+                _isClicking ? tr.get('overlayActive') : tr.get('overlayPaused'),
+                style: theme.textTheme.bodyMedium?.copyWith(color: _isClicking ? Colors.green : Colors.orange),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -260,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildPermissionCard(ThemeData theme) {
+  Widget _buildPermissionCard(ThemeData theme, AppLocalizations tr) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -270,80 +266,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               children: [
                 Icon(Icons.security, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text('权限状态', style: theme.textTheme.titleMedium),
+                Text(tr.get('permissions'), style: theme.textTheme.titleMedium),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _checkPermissions,
-                  tooltip: '刷新',
-                ),
+                IconButton(icon: const Icon(Icons.refresh, size: 20), onPressed: _checkPermissions, tooltip: tr.get('refresh')),
               ],
             ),
             const SizedBox(height: 12),
-            _permissionRow('无障碍服务', _accessibilityEnabled, '执行屏幕点击',
-                _accessibilityEnabled ? null : _openAccessibilitySettings),
+            _permissionRow(tr.get('accessibility'), _accessibilityEnabled, tr.get('accessibilityHint'), _accessibilityEnabled ? null : _openAccessibilitySettings, tr),
             const SizedBox(height: 8),
-            _permissionRow('悬浮窗权限', _overlayPermission, '显示悬浮操作按钮',
-                _overlayPermission ? null : _openOverlayPermissionSettings),
+            _permissionRow(tr.get('overlay'), _overlayPermission, tr.get('overlayHint'), _overlayPermission ? null : _openOverlayPermissionSettings, tr),
           ],
         ),
       ),
     );
   }
 
-  Widget _permissionRow(
-      String label, bool granted, String hint, VoidCallback? onTap) {
+  Widget _permissionRow(String label, bool granted, String hint, VoidCallback? onTap, AppLocalizations tr) {
     return Row(
       children: [
-        Icon(
-          granted ? Icons.check_circle : Icons.cancel,
-          color: granted ? Colors.green : Colors.red,
-          size: 20,
-        ),
+        Icon(granted ? Icons.check_circle : Icons.cancel, color: granted ? Colors.green : Colors.red, size: 20),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-              Text(hint,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text(hint, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             ],
           ),
         ),
-        if (!granted && onTap != null)
-          TextButton(onPressed: onTap, child: const Text('开启')),
+        if (!granted && onTap != null) TextButton(onPressed: onTap, child: Text(tr.get('enable'))),
       ],
     );
   }
 
-  Widget _buildConfigCard(ThemeData theme, bool disabled) {
+  Widget _buildConfigCard(ThemeData theme, AppLocalizations tr, bool disabled) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.tune, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text('点击配置', style: theme.textTheme.titleMedium),
-              ],
-            ),
+            Row(children: [Icon(Icons.tune, color: theme.colorScheme.primary), const SizedBox(width: 8), Text(tr.get('clickConfig'), style: theme.textTheme.titleMedium)]),
             const SizedBox(height: 16),
             TextField(
               controller: _delayController,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               enabled: !disabled,
-              decoration: const InputDecoration(
-                labelText: '点击延迟（毫秒）',
-                hintText: '默认 1000ms = 1秒',
-                helperText: '两次点击之间的间隔时间',
-                border: OutlineInputBorder(),
-                suffixText: 'ms',
-              ),
+              decoration: InputDecoration(labelText: tr.get('delayLabel'), hintText: tr.get('delayHint'), helperText: tr.get('delayHelper'), border: const OutlineInputBorder(), suffixText: 'ms'),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -351,13 +322,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               enabled: !disabled,
-              decoration: const InputDecoration(
-                labelText: '点击次数（可选）',
-                hintText: '留空表示无限次',
-                helperText: '达到次数后自动停止',
-                border: OutlineInputBorder(),
-                suffixText: '次',
-              ),
+              decoration: InputDecoration(labelText: tr.get('countLabel'), hintText: tr.get('countHint'), helperText: tr.get('countHelper'), border: const OutlineInputBorder()),
             ),
           ],
         ),
@@ -365,23 +330,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildMainButton(ThemeData theme) {
+  Widget _buildMainButton(ThemeData theme, AppLocalizations tr) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: FilledButton.icon(
         onPressed: _overlayShown ? _stop : _start,
-        icon: Icon(
-          _overlayShown ? Icons.stop : Icons.play_arrow,
-          size: 28,
-        ),
-        label: Text(
-          _overlayShown ? '停止' : '开始',
-          style: const TextStyle(fontSize: 18),
-        ),
-        style: FilledButton.styleFrom(
-          backgroundColor: _overlayShown ? Colors.red : theme.colorScheme.primary,
-        ),
+        icon: Icon(_overlayShown ? Icons.stop : Icons.play_arrow, size: 28),
+        label: Text(_overlayShown ? tr.get('stop') : tr.get('start'), style: const TextStyle(fontSize: 18)),
+        style: FilledButton.styleFrom(backgroundColor: _overlayShown ? Colors.red : theme.colorScheme.primary),
       ),
     );
   }
