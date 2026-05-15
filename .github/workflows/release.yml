@@ -11,6 +11,9 @@ on:
         required: true
         default: '1.0.0'
 
+permissions:
+  contents: write
+
 jobs:
   android:
     name: Android APK
@@ -40,6 +43,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: build/app/outputs/flutter-apk/auto_tap_android_*
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
